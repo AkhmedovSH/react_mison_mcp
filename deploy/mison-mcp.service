@@ -1,0 +1,51 @@
+# Удалённый MCP-сервер Mison (mcp.mison.uz). Установка:
+#   sudo install -m 644 deploy/mison-mcp.service /etc/systemd/system/mison-mcp.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now mison-mcp
+# Настройки — в /etc/mison-mcp.env (пример: deploy/mison-mcp.env.example); без файла работают значения по умолчанию.
+[Unit]
+Description=Mison MCP server (HTTP)
+Documentation=https://api.mison.uz/mcp
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Временный пользователь без домашней папки и прав записи: ключи клиентов в памяти, на диск сервис не пишет
+DynamicUser=yes
+WorkingDirectory=/var/www/mison_mcp/current
+Environment=NODE_ENV=production
+Environment=PORT=3300
+Environment=HOST=127.0.0.1
+# Сервис стоит за nginx: настоящий адрес клиента — в X-Forwarded-For
+Environment=MISON_MCP_TRUST_PROXY=true
+EnvironmentFile=-/etc/mison-mcp.env
+ExecStart=/usr/bin/env node src/http.js
+Restart=always
+RestartSec=2
+# Остановка по SIGTERM: сервис дожидается текущих запросов (до 10 с)
+TimeoutStopSec=15
+KillSignal=SIGTERM
+
+# Журнал — в journald: journalctl -u mison-mcp -f. Ключи клиентов туда не попадают (только sha256-отпечаток)
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mison-mcp
+
+# Изоляция
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+MemoryMax=512M
+TasksMax=256
+
+[Install]
+WantedBy=multi-user.target

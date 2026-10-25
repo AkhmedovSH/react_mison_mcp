@@ -1,6 +1,6 @@
 # CLAUDE.md — mison_mcp
 
-MCP-сервер Mison (`@mison/mcp`): тонкая обёртка над партнёрским API `/api/integrations/v1/*`. Отдельной логики
+MCP-сервер Mison (удалённый, `mcp.mison.uz`; пакета в npm нет): тонкая обёртка над партнёрским API `/api/integrations/v1/*`. Отдельной логики
 не содержит — каждый инструмент вызывает метод API. Устройство и подключение — в `README.md`.
 
 ## Главное правило: API и MCP меняются вместе
@@ -49,8 +49,8 @@ MCP-сервер Mison (`@mison/mcp`): тонкая обёртка над пар
 
 ## Два режима запуска
 
-- **stdio** (`src/index.js`, `mison-mcp`) — локально у клиента, ключ из `MISON_API_KEY`.
-- **HTTP** (`src/http.js`, `mison-mcp-http`) — удалённый сервер `mcp.mison.uz`: Streamable HTTP без сессий, ключ клиента в
+- **stdio** (`src/index.js`) — для разработки и тестов, ключ из `MISON_API_KEY`; клиентам не раздаём.
+- **HTTP** (`src/http.js`) — удалённый сервер `mcp.mison.uz`: Streamable HTTP без сессий, ключ клиента в
   `Authorization: Bearer`, общий кэш токенов (`TokenCache` в `src/client.js`), лимиты на ключ и на неудачные входы,
   сужение набора заголовками `X-Mison-Readonly` / `X-Mison-Groups`. Тесты — `test/http.test.js`.
 

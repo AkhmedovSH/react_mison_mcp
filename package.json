@@ -1,16 +1,9 @@
 {
-	"name": "@mison/mcp",
-	"version": "0.4.1",
+	"name": "mison-mcp",
+	"private": true,
+	"version": "0.4.2",
 	"description": "MCP-сервер Mison: отчёты, склад, приходы, брони и заказы заведения для ИИ-ассистентов (Claude, ChatGPT, Cursor)",
 	"type": "module",
-	"bin": {
-		"mison-mcp": "src/index.js",
-		"mison-mcp-http": "src/http.js"
-	},
-	"files": [
-		"src",
-		"README.md"
-	],
 	"scripts": {
 		"start": "node src/index.js",
 		"start:http": "node src/http.js",

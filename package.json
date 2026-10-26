@@ -1,7 +1,7 @@
 {
 	"name": "mison-mcp",
 	"private": true,
-	"version": "0.4.2",
+	"version": "0.4.3",
 	"description": "MCP-сервер Mison: отчёты, склад, приходы, брони и заказы заведения для ИИ-ассистентов (Claude, ChatGPT, Cursor)",
 	"type": "module",
 	"scripts": {

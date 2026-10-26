@@ -86,6 +86,16 @@ test('параметры чтения уходят в query, массивы — 
 	await client.close()
 })
 
+test('история гостя: client_phone уходит в query как есть', async () => {
+	const client = await connect()
+	mock.state.requests.length = 0
+	const result = await client.callTool({ name: 'mison_cheques', arguments: { client_phone: '+998 90 249-77-79', limit: 3 } })
+	assert.ok(!result.isError)
+	const request = mock.state.requests.find((item) => item.path === '/reports/cheques')
+	assert.deepEqual(request.query, { client_phone: '+998 90 249-77-79', limit: '3' })
+	await client.close()
+})
+
 test('OLAP уходит телом POST', async () => {
 	const client = await connect()
 	mock.state.requests.length = 0

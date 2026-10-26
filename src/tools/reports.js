@@ -141,7 +141,7 @@ export const reportTools = [
 		group: g,
 		title: 'Чеки',
 		description:
-			'Чеки. Без status — открытые сейчас (в работе, без периода). status=closed или deleted требует date_from/date_to, период до 31 дня. with_items=true — со строками. Для «последний чек» — status=closed, order=desc, limit=1. Страницы — after_id и limit (до 1000).',
+			'Чеки. Без status — открытые сейчас (в работе, без периода). status=closed или deleted требует date_from/date_to, период до 31 дня. with_items=true — со строками. Для «последний чек» — status=closed, order=desc, limit=1. Страницы — after_id и limit (до 1000). ИСТОРИЯ ГОСТЯ: client_phone — чеки одного гостя по телефону (в любом виде); без status — закрытые, без дат — за всё время, новые сначала по 50; в ответе блок client (имя, телефон, число заказов). Так отвечайте на «покажи заказы по номеру +998…». Гость не найден — 404.',
 		path: '/reports/cheques',
 		input: {
 			point_id: pointId,
@@ -149,6 +149,7 @@ export const reportTools = [
 			date_from: dateFrom.optional(),
 			date_to: dateTo.optional(),
 			order_type_ids: z.array(z.number().int()).optional().describe('1 зал, 2 с собой, 3 доставка'),
+			client_phone: z.string().optional().describe('Телефон гостя в любом виде, например +998 90 249-77-79: история его заказов'),
 			with_items: z.boolean().optional(),
 			order: z.enum(['asc', 'desc']).optional(),
 			after_id: z.number().int().optional().describe('Курсор: id последнего полученного чека'),

@@ -7,8 +7,8 @@ const g = 'orders'
 const fmt = (value) => new Intl.NumberFormat('ru-RU').format(value)
 
 const modifier = z.object({
-	product_id: z.number().int().positive(),
-	quantity: z.number().positive().optional(),
+	product_id: z.number().int().positive().describe('Компонент из modifier_groups блюда'),
+	quantity: z.number().positive().optional().describe('Штук; цену, бесплатный лимит группы и «входит в цену» считает сервер'),
 })
 
 const item = z.object({

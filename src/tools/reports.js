@@ -58,6 +58,8 @@ export const reportTools = [
 		description:
 			'Главный отчёт о продажах в любых разрезах: выручка, чеки, средний чек, себестоимость, прибыль, скидки, возвраты по дням, категориям, товарам, точкам, официантам, кассирам, типам оплат. ' +
 			'SALES — продажи товаров, ORDERS — чеки, PAYMENTS — оплаты. Период до 92 дней. Точки передавайте в filters.point_ids, иначе цифры по всем точкам. ' +
+			'Частые вопросы: «сколько доставок привёз курьер» — ORDERS, group_by courier, measures cheques_count, filters.order_type_ids [3] (смена — group_by shift или dimension_filters; без курьера в чеке строка с пустым именем); ' +
+			'«самый маленький/большой чек» — ORDERS, measures min_paid_cheque (без бесплатных чеков), min_cheque (с бесплатными = 0), max_cheque, при вопросе про доставку добавьте order_type_ids [3]. ' +
 			'Итог бери только через include_totals: из строк его складывать нельзя (чек с двумя блюдами попадает в строки обоих). ' +
 			'«Топ-10» — order_by + limit. Если last_sync_at у точки отстаёт, отчёт за сегодня ещё вырастет — скажите об этом пользователю.',
 		path: '/reports/olap',
@@ -141,7 +143,8 @@ export const reportTools = [
 		group: g,
 		title: 'Чеки',
 		description:
-			'Чеки. Без status — открытые сейчас (в работе, без периода). status=closed или deleted требует date_from/date_to, период до 31 дня. with_items=true — со строками. Для «последний чек» — status=closed, order=desc, limit=1. Страницы — after_id и limit (до 1000). ИСТОРИЯ ГОСТЯ: client_phone — чеки одного гостя по телефону (в любом виде); без status — закрытые, без дат — за всё время, новые сначала по 50; в ответе блок client (имя, телефон, число заказов). Так отвечайте на «покажи заказы по номеру +998…». Гость не найден — 404.',
+			'Чеки. Без status — открытые сейчас (в работе, без периода). status=closed или deleted требует date_from/date_to, период до 31 дня. with_items=true — со строками. Для «последний чек» — status=closed, order=desc, limit=1. Страницы — after_id и limit (до 1000). ИСТОРИЯ ГОСТЯ: client_phone — чеки одного гостя по телефону (в любом виде); без status — закрытые, без дат — за всё время, новые сначала по 50; в ответе блок client (имя, телефон, число заказов). Так отвечайте на «покажи заказы по номеру +998…». Гость не найден — 404. ' +
+			'ПО КОНЦУ НОМЕРА: client_phone_suffix — последние 4–12 цифр («номер оканчивается на 8781»); чеки всех совпавших гостей, в ответе блок clients. «Сегодняшние заказы гостя» — status=all и date_from=date_to=сегодня.',
 		path: '/reports/cheques',
 		input: {
 			point_id: pointId,
@@ -150,6 +153,7 @@ export const reportTools = [
 			date_to: dateTo.optional(),
 			order_type_ids: z.array(z.number().int()).optional().describe('1 зал, 2 с собой, 3 доставка'),
 			client_phone: z.string().optional().describe('Телефон гостя в любом виде, например +998 90 249-77-79: история его заказов'),
+			client_phone_suffix: z.string().optional().describe('Последние 4–12 цифр номера гостя, например 8781: чеки всех гостей с таким окончанием (до 20 гостей)'),
 			with_items: z.boolean().optional(),
 			order: z.enum(['asc', 'desc']).optional(),
 			after_id: z.number().int().optional().describe('Курсор: id последнего полученного чека'),
@@ -189,6 +193,23 @@ export const reportTools = [
 		},
 	}),
 	getTool({
+		name: 'mison_deleted_items',
+		group: g,
+		title: 'Удалённые позиции чеков',
+		description:
+			'Какие товары удаляли из закрытых чеков: название, количество, сумма, чек, смена, кто и по какой причине. Для «какие продукты удалены в смене/за день», «что чаще всего удаляют». ' +
+			'group_by=product — сводка по товарам (количество, сумма, чеков), по умолчанию — позиции по одной. search — часть названия. Позиции целиком удалённого чека сюда не входят: чеки — mison_cheques status=deleted. ' +
+			'Сумма сходится с deleted_items_amount в mison_cash_shifts. Нет смены или удалений за день — список пустой, скажите об этом. Период до 92 дней; без point_id — все точки.',
+		path: '/reports/deleted-items',
+		input: {
+			date_from: dateFrom,
+			date_to: dateTo,
+			point_id: pointId,
+			group_by: z.enum(['none', 'product']).optional().describe('product — сводка по товарам'),
+			search: z.string().optional().describe('Часть названия товара'),
+		},
+	}),
+	getTool({
 		name: 'mison_registrations',
 		group: g,
 		title: 'Новые клиенты и организации',
@@ -220,9 +241,10 @@ export const reportTools = [
 		name: 'mison_organizations_debt',
 		group: g,
 		title: 'Организации и их долг',
-		description: 'Организации-контрагенты (клиенты в долг) и их долг перед заведением. only_debt=true — только должники.',
+		description:
+			'Организации-контрагенты (клиенты в долг) и их долг перед заведением (balance минус — должна заведению, плюс — аванс). only_debt=true — только должники. search — часть названия, ИНН или телефона: «сколько должен Бахо». Графика будущих платежей в Mison нет — только текущий баланс; оплаты за период — mison_organization_payments.',
 		path: '/reports/organizations',
-		input: { point_id: pointId, only_debt: z.boolean().optional() },
+		input: { point_id: pointId, only_debt: z.boolean().optional(), search: z.string().optional().describe('Часть названия, ИНН или телефона организации') },
 	}),
 	getTool({
 		name: 'mison_organization_payments',
@@ -263,7 +285,8 @@ export const reportTools = [
 		group: g,
 		title: 'Список товаров с ценами',
 		description:
-			'Справочник товаров: цена сейчас, себестоимость, фудкост, продаётся ли, стоп. Товар один раз, по точкам — массив points. Для «сколько стоит», «какой фудкост у блюда».',
+			'Справочник товаров: цена сейчас, себестоимость, фудкост, продаётся ли, стоп. Товар один раз, по точкам — массив points. Для «сколько стоит», «какой фудкост у блюда». ' +
+			'ВСЕ товары, без «топ-N». НЕПРОДАННОЕ: sold_from + sold_to (до 92 дней) добавляют sold_quantity/sold_amount к точкам, only_unsold=true оставляет только то, что за период не продавалось; для блюд укажите types=product (без types придёт и сырьё).',
 		path: '/reports/products',
 		input: {
 			point_id: pointId,
@@ -271,6 +294,9 @@ export const reportTools = [
 			status: status('active (по умолчанию), inactive, deleted'),
 			menu_ids: z.string().optional().describe('Папки меню через запятую, с вложенными'),
 			search: z.string().optional().describe('Часть названия'),
+			sold_from: dateFrom.optional().describe('Начало периода продаж YYYY-MM-DD (вместе с sold_to)'),
+			sold_to: dateTo.optional().describe('Конец периода продаж YYYY-MM-DD'),
+			only_unsold: z.boolean().optional().describe('true — только товары без продаж за период (нужны sold_from и sold_to)'),
 		},
 	}),
 	getTool({

@@ -96,6 +96,24 @@ test('история гостя: client_phone уходит в query как ес�
 	await client.close()
 })
 
+test('новые параметры отчётов: окончание номера, непроданное, поиск организации, удалённые позиции', async () => {
+	const client = await connect()
+	const names = (await client.listTools()).tools.map((tool) => tool.name)
+	assert.ok(names.includes('mison_deleted_items'))
+
+	const queryOf = async (name, args, path) => {
+		mock.state.requests.length = 0
+		const result = await client.callTool({ name, arguments: args })
+		assert.ok(!result.isError, `${name}: ${textOf(result)}`)
+		return mock.state.requests.find((item) => item.path === path).query
+	}
+	assert.deepEqual(await queryOf('mison_cheques', { client_phone_suffix: '8781', status: 'all', date_from: '2026-10-28', date_to: '2026-10-28' }, '/reports/cheques'), { client_phone_suffix: '8781', status: 'all', date_from: '2026-10-28', date_to: '2026-10-28' })
+	assert.deepEqual(await queryOf('mison_products', { types: 'product', sold_from: '2026-10-01', sold_to: '2026-10-27', only_unsold: true }, '/reports/products'), { types: 'product', sold_from: '2026-10-01', sold_to: '2026-10-27', only_unsold: 'true' })
+	assert.deepEqual(await queryOf('mison_organizations_debt', { search: 'Бахо' }, '/reports/organizations'), { search: 'Бахо' })
+	assert.deepEqual(await queryOf('mison_deleted_items', { date_from: '2026-10-26', date_to: '2026-10-26', group_by: 'product' }, '/reports/deleted-items'), { date_from: '2026-10-26', date_to: '2026-10-26', group_by: 'product' })
+	await client.close()
+})
+
 test('OLAP уходит телом POST', async () => {
 	const client = await connect()
 	mock.state.requests.length = 0

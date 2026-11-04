@@ -58,7 +58,8 @@ export const reportTools = [
 		description:
 			'Главный отчёт о продажах в любых разрезах: выручка, чеки, средний чек, себестоимость, прибыль, скидки, возвраты по дням, категориям, товарам, точкам, официантам, кассирам, типам оплат. ' +
 			'SALES — продажи товаров, ORDERS — чеки, PAYMENTS — оплаты. Период до 92 дней. Точки передавайте в filters.point_ids, иначе цифры по всем точкам. ' +
-			'Частые вопросы: «сколько доставок привёз курьер» — ORDERS, group_by courier, measures cheques_count, filters.order_type_ids [3] (смена — group_by shift или dimension_filters; без курьера в чеке строка с пустым именем); ' +
+			'Частые вопросы: «сколько заказов и на какую сумму принял оператор колл-центра» — ORDERS, group_by operator, measures cheques_count и net_revenue (оператор записан в чеке, а не кассир или официант; чеки без оператора — строка с пустым operator_name); ' +
+			'«сколько доставок привёз курьер» — ORDERS, group_by courier, measures cheques_count, filters.order_type_ids [3] (смена — group_by shift или dimension_filters; без курьера в чеке строка с пустым именем); ' +
 			'«самый маленький/большой чек» — ORDERS, measures min_paid_cheque (без бесплатных чеков), min_cheque (с бесплатными = 0), max_cheque, при вопросе про доставку добавьте order_type_ids [3]. ' +
 			'Итог бери только через include_totals: из строк его складывать нельзя (чек с двумя блюдами попадает в строки обоих). ' +
 			'«Топ-10» — order_by + limit. Если last_sync_at у точки отстаёт, отчёт за сегодня ещё вырастет — скажите об этом пользователю.',
@@ -67,7 +68,7 @@ export const reportTools = [
 			report_type: z.enum(['SALES', 'ORDERS', 'PAYMENTS']).describe('SALES — товары, ORDERS — чеки, PAYMENTS — оплаты'),
 			date_from: dateFrom,
 			date_to: dateTo,
-			group_by: z.array(z.string()).max(7).optional().describe('Группировки, до 7 (например date, category, product, point, waiter, cashier). Пусто — одна строка итога'),
+			group_by: z.array(z.string()).max(7).optional().describe('Группировки, до 7 (например date, category, product, point, waiter, cashier, operator — оператор колл-центра, courier, opened_by). Пусто — одна строка итога'),
 			measures: z.array(z.string()).min(1).describe('Показатели (например quantity, net_amount, cost, gross_profit, cheques_count, avg_cheque)'),
 			filters: z
 				.looseObject({})

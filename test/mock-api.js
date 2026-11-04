@@ -65,6 +65,14 @@ export function startMockApi() {
 			}
 			if (path === '/orders/777' && req.method === 'GET') return send(404, { message: 'Заказ не найден' })
 			if (path === '/orders/778/cancel') return send(409, { message: 'Заказ уже принят на точке, отмена возможна только через кассу' })
+			if (path === '/orders/calculate' && req.method === 'POST') {
+				const items = body.items.reduce((sum, line) => sum + line.quantity * (line.price ?? 1000), 0)
+				const delivery = body.delivery_price ?? 0
+				return send(200, { items_amount: items, discount: body.discount ?? 0, delivery: { price: delivery }, total_amount: items - (body.discount ?? 0) + delivery })
+			}
+			if (path === '/orders' && req.method === 'POST') {
+				return send(200, { order_id: 901, external_id: body.external_id, status: 'CREATED', discount: body.discount ?? 0, delivery_price: body.delivery_price ?? 0, courier: body.courier ?? null })
+			}
 
 			if (path === '/transfers/recipients') return send(200, { echo: Object.fromEntries(url.searchParams), recipients: [{ recipient_id: 'rec-1', name: 'Партнёр', warehouses: [{ warehouse_id: 460, name: 'Склад' }] }] })
 			if (path === '/transfers/stock') return send(200, { echo: Object.fromEntries(url.searchParams), items: [] })

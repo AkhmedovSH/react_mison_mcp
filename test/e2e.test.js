@@ -224,6 +224,48 @@ test('идентификатор создаётся сам, а при сбое 5
 	await client.close()
 })
 
+test('заказ агрегатора: свои цены, доставка, скидка и курьер доходят до API и видны в подтверждении', async () => {
+	const client = await connect()
+	mock.state.requests.length = 0
+	const args = {
+		point_id: 'p-1',
+		order_type_id: 3,
+		payment_type_id: 71,
+		client: { phone: '998901112233' },
+		address: { street: 'Амира Темура 15', latitude: 41.3, longitude: 69.2 },
+		items: [{ product_id: 777, quantity: 2, price: 30000, modifiers: [{ product_id: 3884, quantity: 1, price: 3000 }] }],
+		delivery_price: 10000,
+		discount: 5000,
+		courier: { name: 'Бекзод', phone: '998935554433' },
+		external_number: '1042',
+		source: 'Delever',
+	}
+
+	const calc = await client.callTool({ name: 'mison_order_calculate', arguments: { point_id: 'p-1', order_type_id: 3, items: [{ product_id: 777, quantity: 2, price: 30000 }], delivery_price: 10000, discount: 5000 } })
+	assert.ok(!calc.isError, textOf(calc))
+	assert.match(textOf(calc), /"total_amount":65000/)
+
+	const preview = await client.callTool({ name: 'mison_order_create', arguments: args })
+	assert.match(textOf(preview), /по 30\s000 \(цена партнёра\)/)
+	assert.match(textOf(preview), /Доставка партнёра: 10\s000/)
+	assert.match(textOf(preview), /Скидка партнёра: 5\s000/)
+	assert.match(textOf(preview), /Курьер: Бекзод/)
+	assert.equal(mock.state.requests.filter((item) => item.path === '/orders').length, 0, 'без confirmed запрос не уходил')
+
+	const created = await client.callTool({ name: 'mison_order_create', arguments: { ...args, confirmed: true } })
+	assert.ok(!created.isError, textOf(created))
+	const posted = mock.state.requests.filter((item) => item.path === '/orders')[0].body
+	assert.equal(posted.items[0].price, 30000)
+	assert.equal(posted.items[0].modifiers[0].price, 3000)
+	assert.equal(posted.delivery_price, 10000)
+	assert.equal(posted.discount, 5000)
+	assert.deepEqual(posted.courier, { name: 'Бекзод', phone: '998935554433' })
+	assert.equal(posted.external_number, '1042')
+	assert.equal(posted.source, 'Delever')
+	assert.match(posted.external_id, /^mcp-/)
+	await client.close()
+})
+
 test('409 при отмене приходит как ошибка с текстом сервера и не повторяется', async () => {
 	const client = await connect()
 	mock.state.requests.length = 0

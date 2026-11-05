@@ -164,6 +164,11 @@ test('ошибки API превращаются в понятный текст �
 	const notFound = await client.callTool({ name: 'mison_order_status', arguments: { order_id: 777 } })
 	assert.equal(notFound.isError, true)
 	assert.match(textOf(notFound), /\(404\).*Заказ не найден/s)
+
+	const notPaid = await client.callTool({ name: 'mison_order_status', arguments: { order_id: 779 } })
+	assert.equal(notPaid.isError, true)
+	assert.match(textOf(notPaid), /\(402\).*не оплачен/s)
+	assert.match(textOf(notPaid), /Повторять бесполезно/)
 	await client.close()
 })
 

@@ -169,6 +169,17 @@ test('ошибки API превращаются в понятный текст �
 	assert.equal(notPaid.isError, true)
 	assert.match(textOf(notPaid), /\(402\).*не оплачен/s)
 	assert.match(textOf(notPaid), /Повторять бесполезно/)
+
+	// Ключ услуги (AI-ассистент): подсказка по коду, а не общая по статусу
+	const serviceOrders = await client.callTool({ name: 'mison_order_status', arguments: { order_id: 780 } })
+	assert.equal(serviceOrders.isError, true)
+	assert.match(textOf(serviceOrders), /\(403\).*не принимает заказы/s)
+	assert.match(textOf(serviceOrders), /модуля «Партнёрское API»/)
+	assert.doesNotMatch(textOf(serviceOrders), /Интеграции → API-ключи/)
+
+	const serviceUnpaid = await client.callTool({ name: 'mison_order_status', arguments: { order_id: 781 } })
+	assert.equal(serviceUnpaid.isError, true)
+	assert.match(textOf(serviceUnpaid), /\(402\).*тот же ключ снова заработает/s)
 	await client.close()
 })
 

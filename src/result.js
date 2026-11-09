@@ -62,9 +62,16 @@ const HINTS = {
 	429: 'Слишком много запросов. Подождите минуту.',
 }
 
+// Подсказка по коду ошибки точнее, чем по HTTP-статусу: ключ услуги (AI-ассистент) живёт по своим правилам
+const CODE_HINTS = {
+	service_not_paid: 'Ключ выпущен под услугу (например, AI-ассистент), и у заведения она не подключена или не оплачена. Повторять бесполезно: владелец подключает её в кабинете (раздел «Подписка») или через своего агента Mison; после оплаты тот же ключ снова заработает.',
+	orders_not_allowed: 'Ключ выпущен под услугу: заказы, гости и проверка доставки ему закрыты. Повторять бесполезно — для заказов нужен обычный ключ модуля «Партнёрское API».',
+}
+
 export function fail(error) {
 	if (error instanceof MisonError) {
-		const hint = HINTS[error.status]
+		const code = error.body && typeof error.body === 'object' ? error.body.code : undefined
+		const hint = CODE_HINTS[code] ?? HINTS[error.status]
 		const details = error.body && typeof error.body === 'object'
 			? { ...error.body, message: undefined }
 			: null

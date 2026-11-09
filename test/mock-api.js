@@ -65,6 +65,8 @@ export function startMockApi() {
 			}
 			if (path === '/orders/777' && req.method === 'GET') return send(404, { message: 'Заказ не найден' })
 			if (path === '/orders/779' && req.method === 'GET') return send(402, { message: 'Модуль «Партнёрское API» не подключён или не оплачен', code: 'module_not_paid' })
+			if (path === '/orders/780' && req.method === 'GET') return send(403, { message: 'Этот ключ выпущен под услугу и не принимает заказы', code: 'orders_not_allowed' })
+			if (path === '/orders/781' && req.method === 'GET') return send(402, { message: 'Услуга, под которую выпущен ключ, не подключена или не оплачена', code: 'service_not_paid' })
 			if (path === '/orders/778/cancel') return send(409, { message: 'Заказ уже принят на точке, отмена возможна только через кассу' })
 			if (path === '/orders/calculate' && req.method === 'POST') {
 				const items = body.items.reduce((sum, line) => sum + line.quantity * (line.price ?? 1000), 0)

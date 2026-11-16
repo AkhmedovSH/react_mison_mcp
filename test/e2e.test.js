@@ -86,6 +86,19 @@ test('параметры чтения уходят в query, массивы — 
 	await client.close()
 })
 
+test('основное меню: mison_menus отдаёт id 0, mison_menu с id 0 идёт в /menus/0', async () => {
+	const client = await connect()
+	mock.state.requests.length = 0
+	const list = await client.callTool({ name: 'mison_menus', arguments: {} })
+	assert.ok(!list.isError)
+	assert.match(textOf(list), /"id":\s*0/)
+	const menu = await client.callTool({ name: 'mison_menu', arguments: { id: 0, point_id: 'p-1' } })
+	assert.ok(!menu.isError, textOf(menu))
+	const request = mock.state.requests.find((item) => item.path === '/menus/0')
+	assert.deepEqual(request.query, { point_id: 'p-1' })
+	await client.close()
+})
+
 test('история гостя: client_phone уходит в query как есть', async () => {
 	const client = await connect()
 	mock.state.requests.length = 0

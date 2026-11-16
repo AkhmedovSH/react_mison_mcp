@@ -52,6 +52,8 @@ export function startMockApi() {
 			}
 
 			if (path === '/points') return send(200, { points: [{ id: 'p-1', name: 'Чиланзар' }] })
+			if (path === '/menus') return send(200, { menus: [{ id: 0, name: 'Основное меню', description: null, updated_at: null }] })
+			if (path === '/menus/0') return send(200, { id: 0, name: 'Основное меню', categories: [], products: [], echo: Object.fromEntries(url.searchParams) })
 			if (path === '/reports/payroll') return send(200, { echo: Object.fromEntries(url.searchParams), employees: [] })
 			if (path === '/reports/cheques') return send(200, { echo: Object.fromEntries(url.searchParams), cheques: [] })
 			if (path === '/reports/deleted-items') return send(200, { echo: Object.fromEntries(url.searchParams), items: [] })

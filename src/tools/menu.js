@@ -10,7 +10,8 @@ export const menuTools = [
 		name: 'mison_menus',
 		group: g,
 		title: 'Витрины меню',
-		description: 'Список витрин меню, доступных ключу. id витрины нужен для mison_menu.',
+		description:
+			'Список меню, доступных ключу. id нужен для mison_menu. Если у ключа не выбрана витрина, в списке одна запись «Основное меню» с id 0.',
 		path: '/menus',
 	}),
 	getTool({
@@ -18,11 +19,11 @@ export const menuTools = [
 		group: g,
 		title: 'Меню точки',
 		description:
-			'Витрина целиком для точки: категории и товары с ценами, модификаторами и доступностью (is_available). product_id товара нужен для заказа. Ответ большой — берите, когда нужно меню, а не для поиска одного товара.',
+			'Меню целиком для точки: категории и товары с ценами, модификаторами и доступностью (is_available). id 0 — основное меню заведения для ключа без витрины, в той же структуре (разделы и товары, выставленные гостям; весь каталог — mison_nomenclature). product_id товара нужен для заказа. Ответ большой — берите, когда нужно меню, а не для поиска одного товара.',
 		path: '/menus/{id}',
 		pathParams: ['id'],
 		input: {
-			id: z.number().int().positive().describe('id витрины из mison_menus'),
+			id: z.number().int().nonnegative().describe('id из mison_menus; 0 — основное меню'),
 			point_id: pointIdRequired,
 		},
 	}),

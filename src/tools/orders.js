@@ -13,7 +13,7 @@ const modifier = z.object({
 })
 
 const item = z.object({
-	product_id: z.number().int().positive().describe('Товар из меню'),
+	product_id: z.number().int().positive().describe('Товар из меню; у товара с размерами — product_id размера из его sizes, товар целиком сервер отклонит'),
 	quantity: z.number().positive().describe('Количество, дробное допустимо'),
 	comment: z.string().max(255).optional().describe('Пожелание по позиции, уйдёт на кухню'),
 	price: z.number().min(0).optional().describe('Цена партнёра за единицу блюда без модификаторов. Только для агрегатора со своими ценами; не передавайте — возьмётся цена меню'),
